@@ -230,7 +230,18 @@ The results are written as .ply meshes.  One can view them with free viewer [Mes
 
 1. The `segments_by_cc` is a folder with details by connected component.
 - `cc_1_segments_TabbMedeiros.ply` shows the segments of the curve skeleton, the number (starting from 1), indicates for which connected component.
-- `results_segments1.txt` lists the voxel coordinates of individual curve skeleton segments per connected component number (the number indicates for which connected component.
+- `results_segments1.txt` lists the voxel coordinates of individual curve skeleton segments per connected component number (the number indicates for which connected component.)
+This file is in our format, and generally lists:
+
+```
+number of segments
+number per segment 0
+voxel_index voxel_index ......
+number per segment 1
+voxel_index voxel_index ......
+```
+
+For those using xyz coordinates, the format is identical except using xyz coordinates, as shown in this code snippet.  The image stack representation also writes results using the xyz representation for segments.
 
 ````c++
 out << number_segments_graph << endl;
@@ -245,18 +256,26 @@ for (int_type_t i = 0; i < number_segments_graph; i++){
 	out << endl;
 }
 ````
+2. The `skeletons_by_cc` is a folder with full skeletons and the initial object.
+- `initial1.ply` is a file shows a mesh of the original object.  This may be important for verifying that your model files are set up correctly. 
+- `result_1.txt` is the sparse representation of the curve skeleton result.
+- `skel_TabbMedeiros_1.ply` is the curve skeleton of the connected component indicated by the number.
 
-- The `paths_TabbMedeiros.ply` file shows the paths computed by the algorithm.
-- The `skel_TabbMedeiros.ply` shows the 1D skeleton voxels.
-- The `initial.ply` file shows a mesh of the original object.  This may be important for verifying that your model files are set up correctly.  Also, note that this code only computes the curve skeleton of the largest connected component of the model file. This can easily be altered by iterating over all of the components, or feeding different components to the algorithm. `initial.ply` records the connected component used as input to the algorithm.
-- `details.txt` shows some record of the algorithm's progress and the size of the input.  For instance, 
+3. `details.txt` shows some record of the algorithm's progress and the size of the input.  For instance, 
 ```
-time 3.294 seconds 
-Number of occupied voxels 88798
+time 1.079 seconds 
+Number of occupied voxels per connected component: 88798
 Number possible voxels 45240000
-Number of proposed tips 145
+Number of proposed tips by connected component 145
 Threshold for spurious segment classification 1e-12
 ```
 time is the run time for the algorithm to compute the curve skeleton, not including load and write time.  The initial model contained 88,798 voxels.  The user enter threshold 1e-12 or used the default, etc.
 
+4. `trace.txt` has some small details of the run, such as what options were selected:
+
+```
+Read from /home/atabb/DemoData/CS_ADC/demo_files_with_results/OurFileFormat/0.txt
+File has 1 connected components and user has selected to curve skeletonize  all of them
+```
+cc 0 size 88798
 
