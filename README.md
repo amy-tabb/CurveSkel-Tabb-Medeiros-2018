@@ -29,6 +29,7 @@ This paper is also available from arXiv:1702.07619 [cs.CV] [here](https://arxiv.
 
 The code may be used without restriction. If the results of the code are used as a part of a system described in a publication, we request that the authors cite the published paper at a minimum.  If you use the implementation contained in this github release as a part of a publication, we'd be thrilled if you cited the code release as well.  The citation for the code itself is: 
 
+''''latex
 @electronic{tabb2018skel_code,
 author = {Tabb, Amy},
 year = {2018},
@@ -37,10 +38,11 @@ doi = {10.15482/USDA.ADC/1399689},
 owner = {Ag Data Commons},
 howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1399689}}
 } 
+''''
 
 (Other citation styles are fine -- this is one that worked for us, but we're not totally happy with it.)
 
-Finally, all organizations have ways of assessing impact, and as someone whose work will never see the light of patenting since I develop algorithms, if this curve skeleton algo is useful to your work in some way and you are able to let me know in a one line email, that would be fabulous.  Examples: "We downloaded the code.  Thanks!".  "We downloaded the code and use it in our systems, in ways X, Y, Z."    
+Finally, all organizations have ways of assessing impact, and as someone whose work will likely never see the light of patenting since I develop algorithms, if this curve skeleton algo is useful to your work in some way and you are able to let me know in a one line email, that would be fabulous.  Examples: "We downloaded the code.  Thanks!";  "We downloaded the code and use it in our systems, in ways X, Y, Z."    
 
 # Minimal working examples
 Minimal working examples are available as a part of this Github repository, in the `demo_files` directory.  Also, this release is part of a data release hosted at Ag Data Commons, and more information may be available [there](http://dx.doi.org/10.15482/USDA.ADC/1399689).
