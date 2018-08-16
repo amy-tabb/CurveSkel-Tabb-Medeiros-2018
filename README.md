@@ -31,6 +31,7 @@ This paper is also available from arXiv:1702.07619 [cs.CV] [here](https://arxiv.
 
 The code may be used without restriction. If the results of the code are used as a part of a system described in a publication, we request that the authors cite the published paper at a minimum.  If you use the implementation contained in this github release as a part of a publication, we'd be thrilled if you cited the code release as well.  The citation for the code itself is: 
 
+````latex
 @electronic{tabb2018skel_code,
 author = {Tabb, Amy},
 year = {2018},
@@ -38,7 +39,8 @@ title = {Code from: Fast and robust curve skeletonization for real-world elongat
 doi = {10.15482/USDA.ADC/1399689},
 owner = {Ag Data Commons},
 howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1399689}}
-} 
+}
+```` 
 
 
 (Other citation styles are fine -- this is one that worked for us, but we're not totally happy with it.)

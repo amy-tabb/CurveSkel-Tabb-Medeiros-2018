@@ -14,6 +14,7 @@ Changelog:
 This README file is to accompany code for curve skeletonization of elongated objects that may have noisy surfaces, produced by Amy Tabb and Henry Medeiros as a companion to their paper:
 	*Fast and robust curve skeletonization for real-world elongated objects*
 
+````latex
 @INPROCEEDINGS{Tabb18Fast,
 author={Amy Tabb and Henry Medeiros},
 booktitle={2018 IEEE Winter Conference on Applications of Computer Vision (WACV)},
@@ -22,6 +23,7 @@ year={2018},
 pages={1935-1943},
 doi={10.1109/WACV.2018.00214},
 month={March},}
+````
 
 This paper is also available from arXiv:1702.07619 [cs.CV] [here](https://arxiv.org/pdf/1702.07619.pdf) -- including the supplementary material.  The arxiv version is identical in content to the IEEE version.
 
