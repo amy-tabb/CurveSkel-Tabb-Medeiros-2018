@@ -118,7 +118,7 @@ And the lines are as follows:
 2. Line two has the smallest coordinates of the bounding box.
 3. Line three has the largest coordinates of the bounding box, plus 1. So if the largest x coordinate is 259, we list 300 here. 
 
-Then, to decode the coordinates in  `0.txt`, inspect the conversion functions in `Reconstruction.cpp`.  For instance:
+Then, to decode the coordinates in  `0.txt`, inspect the conversion functions in `ReconstructionStructure.cpp`.  For instance:
 
 ````c++
 void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, int_type_t& x, int_type_t& y, int_type_t& z){
@@ -139,33 +139,79 @@ void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, 
 	}
 }
 ````
+The user sends `voxel_index` to this function, and the `x`, `y`, `z` coordinates -- from `(0,0,0)` are initialized.  `int_type_t` is a number type that I have defined that is an unsigned integer.  I'm using properties of integer division and modulo to map single numbers from `0.txt` to `(x, y, z)` and back again.  This is similar to what is done for image coordinates, by the way. `number_voxels_per_dim` is shorthand for "number of voxels per dimension". 
 
+Here's the opposite function:
 
+````c++
+int_type_t ReconstructionStructure::ReturnIndexFromXYZIndices(int_type_t x, int_type_t y, int_type_t z){
+	if (x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z >= number_voxels_grid){
+		cout << "ERROR ON size " <<x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z << ", n voxesl " << number_voxels_grid << endl;
+		cout << "x , y, z " << x << ", " << y << ",  " << z << endl;
+		exit(1);
+	}
 
+	return x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z;
 
+}
+````
 
+You may wonder why the heck I do this, and it is largely to save on memory and time for accessing elements -- I store the occupied voxels in a vector, versus large 3D grids with lots of empty, wasted space.  There are prices to pay for determining *where* things are, but these are relatively small prices to pay and are taken care of in the beginning, once.  Also, the size of these text files is quite small and can be read and decoded quickly. 
 
+### Apply algorithm to all connected components, or only the largest
+
+A new feature is the ability to apply the curve skeletonization algorithm to all of the connected components, or only the largest one.  For all of the formats except the image stack, the results are written individually by component.  This argument is a Boolean flag: 0 is only apply the algorithm to the largest component, 1 is apply to all components.  We'll abbreviate `Boolean-cc-flag`.
 
 ### Run with default threshold, our file format
-1. To run the code using the default threshold (1e-12) for rejecting spurious segments, you call with one argument, the name of the directory containing `0.txt` and `BB.txt`:
+1. To run the code using the default threshold (1e-12) for rejecting spurious segments, you call with two arguments, the name of the directory containing `0.txt` and `BB.txt`, and the Boolean connectioned component flag:
 ```
-./program_name directory
+./program_name directory Boolean-cc-flag
 ```
 
 ### Run with selected threshold, our file format
-2. To run the code with different values of the threshold, you call with two argmuents, the directory name followed by the threshold value [0, 1]:
+2. To run the code with different values of the threshold, you call with three argmuents, the directory name, the Boolean connectioned component flag, followed by the threshold value [0, 1]:
 ```
-./program_name directory threshold
+./program_name directory Boolean-cc-flag threshold
 ```
+### Run with xyz representation, write to xyz representation
+3. We created a new sparse representation using x, y, z coordinates.  The coordinates should be integers, but may be negative.  To use the format, indicate the number of occupied voxels in the object in the file, then list the x, y, z coordinates of those voxels.  An example is given in `demo_files/XYZFormatA` and `demo_files/XYZFormatB`. The file should be named `xyz.txt.`  The beginning of one of the files is:
+
+```
+88798      [Number of points]
+0 150 86   [x, y, z coordinates of an occupied voxel]
+0 150 87
+0 151 82
+0 151 83
+0 151 84
+0 151 85
+0 151 86
+0 151 89
+0 151 90
+0 151 91
+0 151 92
+0 151 93
+0 152 77
+0 152 78
+0 152 79
+0 152 80
+```
+
+During the course of the algorithm, our file format's `0.txt` and `BB.txt` files will be created as well.  While the threshold is option for our file format, it is mandatory for the conversion file formats, and then there is another mandatory argument for the xyz format:
+
+```
+./program_name directory Boolean-cc-flag threshold 1
+```
+
+The total number of arguments is four; the last argument is `1`.  The default threshold is `1e-12`.
 
 ### Run from an image stack representation, write to an image stack representation.
-3. We have chosen the image sequence representation for conversion.  To convert models from any other format, one can use ImageJ/Fiji to load and then save as an image
-sequence.  Once a sequence is created, save in a folder titled "rawimages" within the directory.  Then call with three arguments:
+4. We have chosen the image sequence representation for conversion.  To convert models from any other format, one can use ImageJ/Fiji to load and then save as an image
+sequence.  Once a sequence is created, save in a folder titled `rawimages` within the directory.  Then call with four arguments:
 ```
-./program_name directory threshold 1
+./program_name directory Boolean-cc-flag threshold 0
 ```
 
-We have included in the `demo_files` folder an image sequence (`ConversionFromImageSequence`).  The result is saved in a folder called `processedimages`, which one can then load with ImageJ/Fiji to visualize in
+We have included an example in `demo_files/ConversionFromImageSequence`.  The result is saved in a folder called `processedimages`, which one can then load with ImageJ/Fiji to visualize in
 one's preferred environment.  The result is also saved in the format described below.
 
 ## Results
