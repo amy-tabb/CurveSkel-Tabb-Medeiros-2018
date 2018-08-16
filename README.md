@@ -139,12 +139,22 @@ void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, 
 	}
 }
 ````
+The user sends `voxel_index` to this function, and the `x`, `y`, `z` coordinates -- from `(0,0,0)` are initialized.  `int_type_t` is a number type that I have defined that is an unsigned integer.  I'm using properties of integer division and modulo to map single numbers from `0.txt` to `(x, y, z)` and back again.  This is similar to what is done for image coordinates, by the way.  
 
+Here's the opposite function:
 
+````c++
+int_type_t ReconstructionStructure::ReturnIndexFromXYZIndices(int_type_t x, int_type_t y, int_type_t z){
+	if (x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z >= number_voxels_grid){
+		cout << "ERROR ON size " <<x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z << ", n voxesl " << number_voxels_grid << endl;
+		cout << "x , y, z " << x << ", " << y << ",  " << z << endl;
+		exit(1);
+	}
 
+	return x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z;
 
-
-
+}
+````
 
 ### Run with default threshold, our file format
 1. To run the code using the default threshold (1e-12) for rejecting spurious segments, you call with one argument, the name of the directory containing `0.txt` and `BB.txt`:

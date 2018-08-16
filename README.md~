@@ -106,11 +106,11 @@ We include samples of these two types of files in the `demo_files/OurFileFormat`
 
 Our file format uses unsigned integers to represent occupied voxels in a text file, `0.txt`, which, when combined with the bounding box specifications in the bounding box file `BB.txt`, one can determine the coordinates of all of the voxels in the `0.txt` file.  The structure of `BB.txt` is:
 
-'''
+```
 1         
 0 0 0
 300 580 260
-'''
+```
 
 And the lines are as follows:
 
@@ -120,7 +120,7 @@ And the lines are as follows:
 
 Then, to decode the coordinates in  `0.txt`, inspect the conversion functions in `Reconstruction.cpp`.  For instance:
 
-''''c++
+````c++
 void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, int_type_t& x, int_type_t& y, int_type_t& z){
 
 	int_type_t temp_index = voxel_index;
@@ -138,7 +138,7 @@ void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, 
 		exit(1);
 	}
 }
-''''
+````
 
 
 
