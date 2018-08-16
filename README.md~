@@ -118,7 +118,30 @@ And the lines are as follows:
 2. Line two has the smallest coordinates of the bounding box.
 3. Line three has the largest coordinates of the bounding box, plus 1. So if the largest x coordinate is 259, we list 300 here. 
 
-Then, to decode the coordinates in  
+Then, to decode the coordinates in  `0.txt`, inspect the conversion functions in `Reconstruction.cpp`.  For instance:
+
+''''c++
+void ReconstructionStructure::ReturnXYZIndicesFromIndex(int_type_t voxel_index, int_type_t& x, int_type_t& y, int_type_t& z){
+
+	int_type_t temp_index = voxel_index;
+	x = temp_index/(number_voxels_per_dim[1]*number_voxels_per_dim[2]);
+
+	temp_index -= x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]);
+	y = temp_index/(number_voxels_per_dim[2]);
+
+	temp_index -= y*(number_voxels_per_dim[2]);
+
+	z = temp_index;
+
+	if (x*(number_voxels_per_dim[1])*(number_voxels_per_dim[2]) + y*(number_voxels_per_dim[2]) + z != voxel_index){
+		cout << "ERROR on vox computation! " << endl << endl;
+		exit(1);
+	}
+}
+''''
+
+
+
 
 
 
