@@ -1,6 +1,6 @@
 # CurveSkel-Tabb-Medeiros-2018
 
-## Alpha-level release with some new features, Aug. 2018
+## Beta-level release with some new features, Aug. 2018
 
 If you want the more stable release, see the [older version](https://github.com/amy-tabb/CurveSkel-Tabb-Medeiros).
 
