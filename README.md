@@ -156,11 +156,11 @@ int_type_t ReconstructionStructure::ReturnIndexFromXYZIndices(int_type_t x, int_
 }
 ````
 
-You may wonder why the heck I do this, and it is largely to save on memory and time for accessing elements -- I store the occupied voxels in a vector, versus large 3D grids with lots of empty, wasted space.  There are prices to pay for determining *where* things are, but these are relatively small prices to pay and are taken care of in the beginning, once.  Also, the size of these text files is quite small and can be read and decoded quickly. 
+You may wonder why the heck I do this, and it is largely to save on memory and time for accessing elements -- I store the occupied voxels in a vector, versus large 3D grids with lots of empty, wasted space.  There are prices to pay for determining *where* things are, but these are relatively small prices to pay and are taken care of in the beginning, once.  Also, the size of these text files are quite small because and can be read and decoded quickly. 
 
 ### Apply algorithm to all connected components, or only the largest
 
-A new feature is the ability to apply the curve skeletonization algorithm to all of the connected components, or only the largest one.  For all of the formats except the image stack, the results are written individually by component.  This argument is a Boolean flag: 0 is only apply the algorithm to the largest component, 1 is apply to all components.  We'll abbreviate `Boolean-cc-flag`.
+A new feature in this release is the ability to apply the curve skeletonization algorithm to all of the connected components, or only the largest one.  For all of the formats except the image stack, the results are written individually by component.  This argument is a Boolean flag: 0 is only apply the algorithm to the largest component, 1 is apply to all components.  I'll abbreviate this variable as `Boolean-cc-flag`.
 
 ### Run with default threshold, our file format
 1. To run the code using the default threshold (1e-12) for rejecting spurious segments, you call with two arguments, the name of the directory containing `0.txt` and `BB.txt`, and the Boolean connectioned component flag:
@@ -196,7 +196,7 @@ A new feature is the ability to apply the curve skeletonization algorithm to all
 0 152 80
 ```
 
-During the course of the algorithm, our file format's `0.txt` and `BB.txt` files will be created as well.  While the threshold is option for our file format, it is mandatory for the conversion file formats, and then there is another mandatory argument for the xyz format:
+During the course of the algorithm, our file format's `0.txt` and `BB.txt` files will be created as well.  While the threshold was an option for our file format, it is mandatory for the conversion file formats, and then there is another mandatory argument for the xyz format:
 
 ```
 ./program_name directory Boolean-cc-flag threshold 1
@@ -214,10 +214,37 @@ sequence.  Once a sequence is created, save in a folder titled `rawimages` withi
 We have included an example in `demo_files/ConversionFromImageSequence`.  The result is saved in a folder called `processedimages`, which one can then load with ImageJ/Fiji to visualize in
 one's preferred environment.  The result is also saved in the format described below.
 
+### Connection Component Example
+5. There's an example with two connected components in `demo_files/ConnectedComponentExample`, using our file format.  You can try to run it with:
+
+```
+./program_name directory 1 threshold 
+```
+
+(Here, we want to apply the algorithm to both connected components).  You'll then be able to look at the results.
+
 ## Results
 
 Results format:
-The results are written as .ply meshes.  One can view them with free viewer [Meshlab].  A sample of results is shown in the `demo_files/OurFileFormatResult` directory.
+The results are written as .ply meshes.  One can view them with free viewer [Meshlab](http://www.meshlab.net/).  A sample of results is shown in the `demo_files/OurFileFormatResult` directory.
+
+1. The `segments_by_cc` is a folder with details by connected component.
+- `cc_1_segments_TabbMedeiros.ply` shows the segments of the curve skeleton, the number (starting from 1), indicates for which connected component.
+- `results_segments1.txt` lists the voxel coordinates of individual curve skeleton segments per connected component number (the number indicates for which connected component.
+
+````c++
+out << number_segments_graph << endl;
+for (int_type_t i = 0; i < number_segments_graph; i++){
+	number_elements = segment_paths_by_cc[cc][i].size();
+	out << number_elements << endl;
+	for (int_type_t j = 0; j < number_elements; j++){
+		CC->ReturnXYZIndicesFromIndex(SkeletonGraphCC[cc][segment_paths_by_cc[cc][i][j]].grid_id, xd, yd, zd);
+
+		out << xd << " " << yd << " " << zd << endl;
+	}
+	out << endl;
+}
+````
 
 - The `paths_TabbMedeiros.ply` file shows the paths computed by the algorithm.
 - The `skel_TabbMedeiros.ply` shows the 1D skeleton voxels.
