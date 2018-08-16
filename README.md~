@@ -281,6 +281,6 @@ time is the run time for the algorithm to compute the curve skeleton, not includ
 ```
 Read from /home/atabb/DemoData/CS_ADC/demo_files_with_results/OurFileFormat/0.txt
 File has 1 connected components and user has selected to curve skeletonize  all of them
-```
 cc 0 size 88798
+```
 
