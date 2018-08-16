@@ -38,9 +38,10 @@ owner = {Ag Data Commons},
 howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1399689}}
 } 
 
+
 (Other citation styles are fine -- this is one that worked for us, but we're not totally happy with it.)
 
-Finally, all organizations have ways of assessing impact, and as someone whose work will never see the light of patenting since I develop algorithms, if this curve skeleton algo is useful to your work in some way and you are able to let me know in a one line email, that would be fabulous.  Examples: "We downloaded the code.  Thanks!".  "We downloaded the code and use it in our systems, in ways X, Y, Z."    
+Finally, all organizations have ways of assessing impact, and as someone whose work will likely never see the light of patenting since I develop algorithms, if this curve skeleton algo is useful to your work in some way and you are able to let me know in a one line email, that would be fabulous.  Examples: "We downloaded the code.  Thanks!";  "We downloaded the code and use it in our systems, in ways X, Y, Z."    
 
 # Minimal working examples
 Minimal working examples are available as a part of this Github repository, in the `demo_files` directory.  Also, this release is part of a data release hosted at Ag Data Commons, and more information may be available [there](http://dx.doi.org/10.15482/USDA.ADC/1399689).
@@ -81,7 +82,7 @@ though depending on the compiler used, you may need different [flags](https://ww
 	
 6. Easy way to build in Ubuntu with [Eclipse CDT](https://www.eclipse.org/cdt/) with git support (Egit): 
 - `git clone` into the directory of choice.  
-- Create new Managed C++ project, for the directory, select the directory where the `CurveSkel-Tabb-Medeiros` was cloned into.
+- Create new Managed C++ project, for the directory, select the directory where the `CurveSkel-Tabb-Medeiros-2018` was cloned into.
 - The compiler and linker flags for OpenCV 4.0 will be imported.  Build and you're ready to run!
 
 7. Easy way to build without Eclipse CDT:
@@ -94,11 +95,33 @@ The executable `curve_skel` is created.  If you used method 6., the location wil
 
 ## Running
 
-### File formats 
+### File formats: our file format, image stacks, xyz or occupied voxels 
  
 Instructions for use:
 We use a file format for representing models that is composed of a text file containing the model points `0.txt` and bounding box in file `BB.txt`.  
-We include samples of these two types of files in the "examples" folder.  We also have some conversion functions (see 3 in this section).
+
+We include samples of these two types of files in the `demo_files/OurFileFormat` folder.  We also have some conversion functions (see 3 in this section).
+
+#### Explanation of our file format
+
+Our file format uses unsigned integers to represent occupied voxels in a text file, `0.txt`, which, when combined with the bounding box specifications in the bounding box file `BB.txt`, one can determine the coordinates of all of the voxels in the `0.txt` file.  The structure of `BB.txt` is:
+
+'''
+1         
+0 0 0
+300 580 260
+'''
+
+And the lines are as follows:
+
+1. The distance between voxels.  In this example, the voxels are 1 unit apart, which would be typical for MRI or CT data.
+2. Line two has the smallest coordinates of the bounding box.
+3. Line three has the largest coordinates of the bounding box, plus 1. So if the largest x coordinate is 259, we list 300 here. 
+
+Then, to decode the coordinates in  
+
+
+
 
 ### Run with default threshold, our file format
 1. To run the code using the default threshold (1e-12) for rejecting spurious segments, you call with one argument, the name of the directory containing `0.txt` and `BB.txt`:
