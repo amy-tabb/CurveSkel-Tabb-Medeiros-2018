@@ -57,7 +57,7 @@ Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 # Docker version
 
-C++ compiling, linking, running not your cup of tea, or are you on another OS?  I just completed a Docker release -- [here](https://hub.docker.com/r/amytabb/curveskel-tabb-medeiros-docker/).  However, this README.md is going to be your friend, so come back.
+C++ compiling, linking, running not your cup of tea, or are you on another OS?  I just completed a Docker release -- [here](https://hub.docker.com/r/amytabb/curveskel-tabb-medeiros-2018-docker/).  However, this README.md is going to be your friend, so come back.
 
 # Compiling, Linking, Running
 Basic instructions for compilation and linking:
