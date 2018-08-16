@@ -1,0 +1,5 @@
+time 1.079 seconds 
+Number of occupied voxels per connected component: 88798
+Number possible voxels 45240000
+Number of proposed tips by connected component 145
+Threshold for spurious segment classification 1e-12

@@ -219,7 +219,7 @@ sequence.  Once a sequence is created, save in a folder titled `rawimages` withi
 We have included an example in `demo_files/ConversionFromImageSequence`.  The result is saved in a folder called `processedimages`, which one can then load with ImageJ/Fiji to visualize in
 one's preferred environment.  The result is also saved in the format described below.
 
-### Connection Component Example
+### Connected Component Example
 5. There's an example with two connected components in `demo_files/ConnectedComponentExample`, using our file format.  You can try to run it with:
 
 ```
@@ -262,7 +262,7 @@ for (int_type_t i = 0; i < number_segments_graph; i++){
 }
 ````
 2. The `skeletons_by_cc` is a folder with full skeletons and the initial object.
-- `initial1.ply` is a file shows a mesh of the original object.  This may be important for verifying that your model files are set up correctly. 
+- `initial1.ply` is a file shows a mesh of the original object, by connected component.  This may be important for verifying that your model files are set up correctly. 
 - `result_1.txt` is the sparse representation of the curve skeleton result (this will xyz for the xyz format).
 - `skel_TabbMedeiros_1.ply` is the curve skeleton of the connected component indicated by the number.
 
