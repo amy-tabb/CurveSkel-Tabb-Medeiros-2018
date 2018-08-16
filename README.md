@@ -75,13 +75,14 @@ The flags needed using the gnu compiler, openmp, and the C++11 standard are: `-f
 though depending on the compiler used, you may need different [flags](https://www.dartmouth.edu/~rc/classes/intro_openmp/compile_run.html)
 	
 4. 	libraries needed for linking are:
+```
 	gomp   [OpenMP]
 	opencv_core [OpenCV]
 	opencv_legacy [deprecated, some versions of OpenCV and not needed] 
 	opencv_highgui
 	opencv_imgproc
 	opencv_imgcodecs
-
+```
 5. **Note before going further -- if in Ubuntu, you need to `apt-get install build-essential` to get C++ compiler(s) that are OpenMP enabled.  If you are on a Mac, you will need something comparable to build-essential.**
 	
 6. Easy way to build in Ubuntu with [Eclipse CDT](https://www.eclipse.org/cdt/) with git support (Egit): 
