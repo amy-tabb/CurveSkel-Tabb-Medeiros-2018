@@ -187,6 +187,10 @@ int_type_t  BFS_search_from_start_set(vector<SkelGraph>& SG, double* bfs_labels_
 	for (int_type_t i = 0, in = start_set.size(); i < in; i++){
 		F2.push_back(start_set[i]);
 		bfs_labels[start_set[i]] = 1;
+//		if (start_set[i] >= n){
+//			cout << "After to write outside of bounds ...." << i << " start set " << start_set[i] << " n " << n << endl;
+//			exit(1);
+//		}
 		frontier_map[start_set[i]] = true;
 	}
 
@@ -208,7 +212,164 @@ int_type_t  BFS_search_from_start_set(vector<SkelGraph>& SG, double* bfs_labels_
 
 
 
-void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
+//void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
+//		vector<int_type_t>& local_maxima,
+//		vector<int_type_t>& grid_structure, int_type_t big_number, int max_connectivity, bool* already_treated){
+//
+//	int_type_t n = SG.size();
+//	vector<int_type_t> one_connected_component;
+//
+//
+//	//already_explored  = already_treated;
+//	OverwriteFirstArrayWithSecond<bool>(already_explored, already_treated, n);
+//
+//
+//	double self_label;
+//	int_type_t j, jn;
+//	int_type_t n_index;
+//	SkelGraph* self_ptr = 0;
+//	int_type_t x, y, z;
+//	int_type_t av_x, av_y, av_z;
+//	int_type_t temp_index;
+//
+//	double best_distance;
+//	double current_distance;
+//	int_type_t best_index;
+//	int_type_t max_distance_index = n;
+//
+//	double max_distance = 0;
+//	for (int_type_t i = 0; i < n; i++){
+//		if (bfs_labels[i] > max_distance && bfs_labels[i] != big_number && already_explored[i] == false && already_treated[i] == false){
+//			max_distance = bfs_labels[i];
+//			max_distance_index = i;
+//
+//		}
+//	}
+//
+//	bool is_max;
+//	double d = 0;
+//
+//	int_type_t i = max_distance_index;
+//
+//	self_label = bfs_labels[i];
+//
+//	if (already_explored[i] == false && self_label != big_number){
+//		self_ptr = &SG[i];
+//		d = self_label;
+//
+//		if (int(self_ptr->neighbors.size()) < max_connectivity){
+//			is_max = true;
+//			for (j = 0, jn = self_ptr->neighbors.size(); j < jn && is_max == true; j++){
+//				if (bfs_labels[self_ptr->neighbors[j]->voxel_id] > self_label){
+//					is_max = false;
+//				}
+//			}
+//
+//			already_explored[i] = true;
+//			// need to explore all of them to make sure that this is a local max
+//			if (is_max){
+//				//cout << "Third level 231" << endl;
+//				one_connected_component.push_back(i);
+//
+//				for (int_type_t p = 0; p < one_connected_component.size() && is_max == true; p++){
+//
+//					self_ptr = &SG[one_connected_component[p]];
+//
+//
+//					for (j = 0, jn = self_ptr->neighbors.size(); j < jn && is_max == true; j++){
+//						n_index = self_ptr->neighbors[j]->voxel_id;
+//
+//						if (bfs_labels[n_index] > self_label){
+//							is_max = false;
+//						}	else {
+//							// bfs_labels[n_index] == self_label will never happen b/c we're working with doubles
+//							if (already_explored[n_index] == false && bfs_labels[n_index] == self_label){
+//								already_explored[n_index] = true;
+//								one_connected_component.push_back(n_index);
+//							}
+//						}
+//					}
+//
+//				}
+//
+//				if (is_max){
+//					//cout << "number of components .... " << one_connected_component.size() <<  endl;
+//					//cout << "Value of max " << self_label << endl;
+//
+//					av_x = 0;
+//					av_y = 0;
+//					av_z = 0;
+//
+//					for (int_type_t p = 0; p < one_connected_component.size();  p++){
+//						temp_index = SG[one_connected_component[p]].grid_id;
+//
+//						x = temp_index/(grid_structure[1]*grid_structure[2]);
+//
+//						temp_index -= x*(grid_structure[1])*(grid_structure[2]);
+//						y = temp_index/(grid_structure[2]);
+//
+//						temp_index -= y*(grid_structure[2]);
+//
+//						z = temp_index;
+//
+//						av_x += x;
+//						av_y += y;
+//						av_z += z;
+//
+//
+//					}
+//
+//
+//					av_x /= one_connected_component.size();
+//					av_y /= one_connected_component.size();
+//					av_z /= one_connected_component.size();
+//
+//
+//					// for distance = 1, things can go wonky, mutliply by 10.
+//					best_distance = max_distance*max_distance;
+//					best_index = one_connected_component.size();
+//
+//					//cout << "Best distance " << best_distance << " one component size " << one_connected_component.size() << endl;
+//					for (int_type_t p = 0; p < one_connected_component.size();  p++){
+//						temp_index = SG[one_connected_component[p]].grid_id;
+//
+//						x = temp_index/(grid_structure[1]*grid_structure[2]);
+//
+//						temp_index -= x*(grid_structure[1])*(grid_structure[2]);
+//						y = temp_index/(grid_structure[2]);
+//
+//						temp_index -= y*(grid_structure[2]);
+//
+//						z = temp_index;
+//
+//						// perhaps there's a better way to do this ....
+//						current_distance = SquaredDifferenceOfUints(x, av_x) + SquaredDifferenceOfUints(y, av_y)  + SquaredDifferenceOfUints(z, av_z);
+//
+//						//cout << "current distance " << current_distance << endl;
+//						if (current_distance < best_distance){
+//							best_distance = current_distance;
+//							best_index = p;
+//						}
+//					}
+//
+//					if (best_index != one_connected_component.size()){
+//						local_maxima.push_back(one_connected_component[best_index]);
+//					}	else {
+//
+//						cout << "max distance " << max_distance << endl;
+//						cout << "Best distance " << best_distance << " one component size " << one_connected_component.size() << endl;
+//						cout << "Error! best index not found for connected component averaging" << endl;
+//						exit(1);
+//					}
+//				}
+//			}
+//
+//			one_connected_component.clear();
+//		}
+//	}
+//}
+
+bool FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
 		vector<int_type_t>& local_maxima,
 		vector<int_type_t>& grid_structure, int_type_t big_number, int max_connectivity, bool* already_treated){
 
@@ -320,13 +481,7 @@ void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, boo
 					av_y /= one_connected_component.size();
 					av_z /= one_connected_component.size();
 
-					//TODO
-//					// find closest one ...
-//					if (max_distance < 2){
-//						best_distance = one_connected_component.size() * one_connected_component.size() * 10;
-//					}	else {
-//						best_distance = max_distance*max_distance*10;
-//					}
+
 					// for distance = 1, things can go wonky, mutliply by 10.
 					best_distance = max_distance*max_distance;
 					best_index = one_connected_component.size();
@@ -357,10 +512,10 @@ void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, boo
 					if (best_index != one_connected_component.size()){
 						local_maxima.push_back(one_connected_component[best_index]);
 					}	else {
-
+						cout << "max distance " << max_distance << endl;
 						cout << "Best distance " << best_distance << " one component size " << one_connected_component.size() << endl;
 						cout << "Error! best index not found for connected component averaging" << endl;
-						exit(1);
+						return false;
 					}
 				}
 			}
@@ -368,6 +523,8 @@ void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, boo
 			one_connected_component.clear();
 		}
 	}
+
+	return true;
 }
 
 

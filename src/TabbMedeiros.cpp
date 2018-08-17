@@ -195,6 +195,7 @@ void TabbMedeiros(DISTANCE dist_type, string supplied_write_directory, double th
 
 	vector< vector<vector<int_type_t> > > segment_paths_by_cc;
 	vector<int_type_t> loop_counter_by_cc;
+	vector<int_type_t> size_paths_by_loop;
 
 	int_type_t number_nodes;
 	vector<int_type_t> local_maxes_skeleton_hypotheses;
@@ -304,343 +305,378 @@ void TabbMedeiros(DISTANCE dist_type, string supplied_write_directory, double th
 
 
 
-
-
 	for (int cc = cc_lower_limit; cc < cc_upper_limit; cc++){
+
 		loop_counter = 0;
+		size_paths_by_loop.clear();
+		size_paths_by_loop.push_back(0);
+
 
 		/// not the greatest on memory, going to be at peace with this at the moment.
 		ReworkUsingOnlyBiggestConnectedComponent(R_model, MasterSkeletonGraph, SkeletonGraphCC[cc], cc);
 
 		number_nodes = SkeletonGraphCC[cc].size();
 
-		// allocations of storage locations ... ///////////////////////////////
-
-		bfs_label_outside_to_inside_double = new double[number_nodes];
-		bfs_label_outside_to_inside_inverse_double = new double[number_nodes];
-		bfs_label_node_to_node_double = new double[number_nodes];
-		bfs_from_tip_double = new double[number_nodes];
-
-
-		frontier = new bool[number_nodes];
-		already_explored = new bool[number_nodes];
-		this_voxel_already_treated = new bool[number_nodes];
-		pre_skeleton_bool = new bool[number_nodes];
-		stop_lines = new bool[number_nodes];
-		stop_lines_copy = new bool[number_nodes];
-
-		// clear everything -- most is initialized
-		paths.clear();
-
-
-		// Initialization
-		for (int_type_t i = 0; i < number_nodes; i++){
-			already_explored[i] =false;
-			this_voxel_already_treated[i] = false;
-		}
-		for (int_type_t i = 0; i < number_nodes; i++){
-			bfs_label_outside_to_inside_double[i] = 0;
-			bfs_from_tip_double[i] = 0;
-			frontier[i] = false;
-		}
-
-		big_big_number = R_model.number_voxels_grid*2;
-		//////////////////////////////// End reading/initialization /////////////////////////////////
-
-		// Step 1
-		auto t_timer_distance0 = std::chrono::high_resolution_clock::now();
-		// Step 1.1, compute d_i
-		greatest_OtI_distance_double = BFS_general_outside_to_inside_master_induction1(SkeletonGraphCC[cc], bfs_label_outside_to_inside_double, R_model.number_voxels_per_dim,
-				big_big_number,
-				max_connectivity, frontier, dist_type, true);
-		auto t_timer_distance1 = std::chrono::high_resolution_clock::now();
-		cout << "Time for distance computation without a grid ... " << std::chrono::duration_cast<std::chrono::milliseconds>(t_timer_distance1 - t_timer_distance0).count()	<< " milliseconds "<< endl;
-
-		// Step 1.2, find v^*
-		seed_node_index = FindALocalMaximaForSeed(SkeletonGraphCC[cc], bfs_label_outside_to_inside_double, big_big_number);
-		best_value_double = bfs_label_outside_to_inside_double[seed_node_index];
-		local_maxima_sparse_rep_double.clear();
-		local_maxima_sparse_rep_double.push_back(seed_node_index);
-
-		// create inverse of the bfs_map to get w_i's
-		for (int_type_t i = 0; i < number_nodes; i++){
-			bfs_label_outside_to_inside_inverse_double[i] = greatest_OtI_distance_double - bfs_label_outside_to_inside_double[i];
-		}
-
-
-		// Step 2.1 -- compute BFS1 map.
-		temp_vector.resize(1, seed_node_index);
-		greatest_mod_distance_double = BFS_search_from_start_set(SkeletonGraphCC[cc],
-				bfs_label_outside_to_inside_inverse_double, bfs_label_node_to_node_double,
-				big_big_number, frontier, temp_vector, dist_type, true);
-
-
-		// setting initial conditions for the loop
-		current_path_id = 1;
-		SkeletonGraphCC[cc][seed_node_index].path_id = current_path_id;
-
-		// Step 2.2 -- find local maxima in the labels.
-		local_maxes_skeleton_hypotheses.clear();
-		FindLocalMaximaSurfaceSingle(SkeletonGraphCC[cc], bfs_label_node_to_node_double, already_explored,
-				local_maxes_skeleton_hypotheses,R_model.number_voxels_per_dim,
-				big_big_number, max_connectivity, this_voxel_already_treated);
-
-
-		while (local_maxes_skeleton_hypotheses.size() > 0){
-			loop_counter++;
-
-
-			multiple_paths_from_same_start.clear();
-			local_tip = local_maxes_skeleton_hypotheses[0];
-
-
-			if (this_voxel_already_treated[local_tip] == false){ // determine if this voxel has been tested already.
-
-				pre_skeleton_nodes.clear();
-
-				local_max_distance_double = BFS_search_from_tip_to_existing_skeleton(SkeletonGraphCC[cc], bfs_label_outside_to_inside_inverse_double,
-						bfs_from_tip_double, big_big_number, local_tip, pre_skeleton_bool, stop_lines, frontier, dist_type);
-
-
-				// make a copy ....this gets reset in a later step.
-				for (int_type_t k = 0; k < number_nodes; k++){
-					stop_lines_copy[k] = stop_lines[k];
-				}
-
-				pre_skel_distance_double.clear();
-
-
-				keep_components.clear();
-				IdentifyLocalMinimaFromPreSkeletonsSetInKeepUpdatedComponents(SkeletonGraphCC[cc], pre_skeleton_bool, stop_lines, pre_skeleton_nodes, bfs_from_tip_double, keep_components);
-
-
-				for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
-					pre_skel_distance_double.push_back(pair<int_type_t, double>(pre_skeleton_nodes[k], bfs_from_tip_double[pre_skeleton_nodes[k]]));
-				}
-
-				// sort by arrival ....
-
-				std::sort(pre_skel_distance_double.begin(), pre_skel_distance_double.end(), distance_comp_function_skel_distance_double);
-
-				path_counter = 0;
-				last_path_added = paths.size();
-
-				pending_paths.clear();
-				for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
-					current_path.clear();
-					linked_path.clear();
-
-					WalkPreSkeletonToTipToFindJunctionsWithDeepIntoCornersModificationConnectivity(SkeletonGraphCC[cc], bfs_from_tip_double, bfs_label_outside_to_inside_double,
-							pre_skel_distance_double[k].first, current_path);
-
-					FindLinks(SkeletonGraphCC[cc], bfs_label_node_to_node_double, current_path[0], linked_path);
-
-					linked_path[0] = linked_path[1];  // housekeeping, linked path is only two elements long, we only need the second one.
-					linked_path.pop_back();
-					linked_path.insert(linked_path.end(), current_path.begin(), current_path.end());
-
-					pending_paths.push_back(linked_path);
-				}
-
-				// pre Loop handling -- step 4.2 -- deal with some noisy regions
-				if (pre_skeleton_nodes.size() > 1){
-					vector< vector<int_type_t> > temp_pending_paths;
-
-					for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
-						walks_through_another_stop_set0 = true;
-						walks_through_another_stop_set1 = false;
-						int_type_t out_of_first_stop_set_index = pending_paths[k].size();
-
-						int_type_t limit = pending_paths[k].size();
-						if (limit > 10){ limit = 10;}
-
-
-						// first one is the skeleton.
-						for (int_type_t i = 1, in  = pending_paths[k].size(); i < in && walks_through_another_stop_set0 == true; i++){
-							if (stop_lines_copy[pending_paths[k][i]] == false){
-								walks_through_another_stop_set0 = false;
-								out_of_first_stop_set_index = i;
-							}
-						}
-
-						for (int_type_t i = out_of_first_stop_set_index, in  = pending_paths[k].size(); i < in && walks_through_another_stop_set1 == false; i++){
-							if (stop_lines_copy[pending_paths[k][i]] == true){
-								walks_through_another_stop_set1 = true;
-							}
-						}
-
-						if (walks_through_another_stop_set1 == false){
-							temp_pending_paths.push_back(pending_paths[k]);
-						}	else {
-							ClearConnectedComponent(SkeletonGraphCC[cc], pending_paths[k][out_of_first_stop_set_index - 1],  stop_lines_copy);
-						}
-					}
-
-					temp_pending_paths.swap(pending_paths);
-
-					// need to go through and zero out the extra stop set components as well.
-				}
-
-				if (pending_paths.size() == 0){
-					cout << "We have no paths" << endl;
-					//exit(1);
-				}
-
-
-				// the size of pending paths may have changed, here we have the true loops.
-				// Step 4.2 -- loop handling
-				if (pending_paths.size() > 1){ ///loop case
-					int_type_t first_intersection = 0;
-					//int_type_t first_path_max_index_of_intersection = 0;
-
-					int_type_t first_path_id = current_path_id;
-					int_type_t last_path_id = 0;
-
-					// this changes the labels to be the maximum numbered-branch that is coicident with the current branch.
-					// the last branch has all the same label.
-					for (int_type_t k = 0; k < pending_paths.size(); k++){
-						// don't overwrite the ends ....
-						first_intersection = 0;
-						for (int_type_t j = 1, jn = pending_paths[k].size(); j < jn && first_intersection == 0; j++){
-							SkeletonGraphCC[cc][pending_paths[k][j]].path_id = current_path_id;
-						}
-
-						if (SkeletonGraphCC[cc][pending_paths[k][0]].path_id == 0){
-							SkeletonGraphCC[cc][pending_paths[k][0]].path_id = current_path_id;
-						}
-
-						path_counter++;
-						current_path_id++;
-					}
-
-					last_path_id = current_path_id - 1;
-					bool stop_descent = false;
-					int_type_t path_id_for_this_one;
-
-					for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
-						path_id_for_this_one = k + first_path_id;
-
-						stop_descent = false;
-						for (int_type_t i = pending_paths[k].size(); i > 2 && stop_descent == false; i--){
-							if (SkeletonGraphCC[cc][pending_paths[k][i-2]].path_id == path_id_for_this_one){
-								stop_descent = true;
-							}	else {
-								pending_paths[k].pop_back();
-							}
-						}
-						paths.push_back(pending_paths[k]);
-					}
-
-					path_id_for_this_one = pending_paths.size() - 1 + first_path_id;
-					for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
-						if (SkeletonGraphCC[cc][pending_paths[k].back()].path_id == path_id_for_this_one){
-							SkeletonGraphCC[cc][pending_paths[k].back()].path_id = 0;
-						}
-					}
-
-					// pop off the 'tail' for this local max
-					stop_descent = false;
-					for (int_type_t i = pending_paths.back().size() + 1; i > 1 && stop_descent == false; i--){
-						if (SkeletonGraphCC[cc][pending_paths[pending_paths.size() - 1][i-2]].path_id == 0){
-							stop_descent = true;
-						}	else {
-							SkeletonGraphCC[cc][pending_paths[pending_paths.size() - 1].back()].path_id = 0;
-							pending_paths[pending_paths.size() - 1].pop_back();
-						}
-					}
-
-					// then rewrite
-					for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
-						if (SkeletonGraphCC[cc][pending_paths[k].back()].path_id == 0){
-							SkeletonGraphCC[cc][pending_paths[k].back()].path_id = path_id_for_this_one;
-						}
-					}
-
-					//cout << "Line 910 " << endl;
-					for (int_type_t k = 0; k < pending_paths.size(); k++){
-						paths.push_back(pending_paths[k]);
-					}
-				}	else {
-					// mark the tip
-					this_voxel_already_treated[local_tip] = true;
-					// non loop case
-
-					if (current_path_id > 1){
-
-
-						passed_spurious_tests = ClassifyUsingChiSquaredAssumption(SkeletonGraphCC[cc], pending_paths[0][0], stop_lines_copy, paths, R_model.number_voxels_per_dim,
-								big_big_number, max_connectivity, pending_paths[0], threshold);
-
-					}	else {
-						passed_spurious_tests = true;
-					}
-
-					if (passed_spurious_tests){
-						//	cout << "Entering 1394" << pending_paths.size() << endl;
-						// this takes care of the case with more than one segment per tip
-
-						for (int_type_t j = 1, jn = pending_paths[0].size(); j < jn; j++){
-							SkeletonGraphCC[cc][pending_paths[0][j]].path_id = current_path_id;
-						}
-						if (SkeletonGraphCC[cc][pending_paths[0][0]].path_id == 0){
-							SkeletonGraphCC[cc][pending_paths[0][0]].path_id = current_path_id;
-						}
-
-						path_counter++;
-
-						current_path_id++;
-						paths.push_back(pending_paths[0]);
-					}	else {
-
-						FillInTreatedMap(SkeletonGraphCC[cc], bfs_from_tip_double, this_voxel_already_treated, big_big_number);
-					}
-				}
-				current_path.clear();
-
-				// Step 2.1 -- update BFS1
-				if (paths.size() != last_path_added){
-					vector<int_type_t> all_paths = paths[last_path_added];
-
-					for (int_type_t new_path = last_path_added + 1; new_path < paths.size(); new_path++){
-						all_paths.insert(all_paths.end(), paths[new_path].begin(), paths[new_path].end());
-					}
-					greatest_mod_distance_double = BFS_search_from_start_set(SkeletonGraphCC[cc],
-							bfs_label_outside_to_inside_inverse_double, bfs_label_node_to_node_double,
-							big_big_number, frontier, all_paths, dist_type, false);
-				}
+		if (number_nodes == 1){
+			segment_paths_by_cc[cc].push_back(vector<int_type_t>(0));
+
+		}	else {
+
+			// allocations of storage locations ... ///////////////////////////////
+
+			bfs_label_outside_to_inside_double = new double[number_nodes];
+			bfs_label_outside_to_inside_inverse_double = new double[number_nodes];
+			bfs_label_node_to_node_double = new double[number_nodes];
+			bfs_from_tip_double = new double[number_nodes];
+
+
+			frontier = new bool[number_nodes];
+			already_explored = new bool[number_nodes];
+			this_voxel_already_treated = new bool[number_nodes];
+			pre_skeleton_bool = new bool[number_nodes];
+			stop_lines = new bool[number_nodes];
+			stop_lines_copy = new bool[number_nodes];
+
+			// clear everything -- most is initialized
+			paths.clear();
+
+
+			// Initialization
+			for (int_type_t i = 0; i < number_nodes; i++){
+				already_explored[i] =false;
+				this_voxel_already_treated[i] = false;
+			}
+			for (int_type_t i = 0; i < number_nodes; i++){
+				bfs_label_outside_to_inside_double[i] = 0;
+				bfs_from_tip_double[i] = 0;
+				frontier[i] = false;
 			}
 
-			// Step 2.2 -- locate potential endpoints in BFS1 map
-			// find a new local maxima for the next round .....
-			local_maxes_skeleton_hypotheses.clear();
+			big_big_number = R_model.number_voxels_grid*2;
+			//////////////////////////////// End reading/initialization /////////////////////////////////
 
-			FindLocalMaximaSurfaceSingle(SkeletonGraphCC[cc], bfs_label_node_to_node_double, already_explored,
+			// Step 1
+			auto t_timer_distance0 = std::chrono::high_resolution_clock::now();
+			// Step 1.1, compute d_i
+			greatest_OtI_distance_double = BFS_general_outside_to_inside_master_induction1(SkeletonGraphCC[cc], bfs_label_outside_to_inside_double, R_model.number_voxels_per_dim,
+					big_big_number,
+					max_connectivity, frontier, dist_type, true);
+			auto t_timer_distance1 = std::chrono::high_resolution_clock::now();
+			cout << "Time for distance computation without a grid ... " << std::chrono::duration_cast<std::chrono::milliseconds>(t_timer_distance1 - t_timer_distance0).count()	<< " milliseconds "<< endl;
+
+			// Step 1.2, find v^*
+			seed_node_index = FindALocalMaximaForSeed(SkeletonGraphCC[cc], bfs_label_outside_to_inside_double, big_big_number);
+			best_value_double = bfs_label_outside_to_inside_double[seed_node_index];
+			local_maxima_sparse_rep_double.clear();
+			local_maxima_sparse_rep_double.push_back(seed_node_index);
+
+			// create inverse of the bfs_map to get w_i's
+			for (int_type_t i = 0; i < number_nodes; i++){
+				bfs_label_outside_to_inside_inverse_double[i] = greatest_OtI_distance_double - bfs_label_outside_to_inside_double[i];
+			}
+
+
+			// Step 2.1 -- compute BFS1 map.
+			temp_vector.clear();
+			temp_vector.resize(1, seed_node_index);
+			greatest_mod_distance_double = BFS_search_from_start_set(SkeletonGraphCC[cc],
+					bfs_label_outside_to_inside_inverse_double, bfs_label_node_to_node_double,
+					big_big_number, frontier, temp_vector, dist_type, true);
+
+			cout << "greatest distance " << greatest_mod_distance_double << "  seed node " << seed_node_index << endl;
+
+
+			// setting initial conditions for the loop
+			current_path_id = 1;
+			SkeletonGraphCC[cc][seed_node_index].path_id = current_path_id;
+
+			// Step 2.2 -- find local maxima in the labels.
+			local_maxes_skeleton_hypotheses.clear();
+			bool valid = FindLocalMaximaSurfaceSingle(SkeletonGraphCC[cc], bfs_label_node_to_node_double, already_explored,
 					local_maxes_skeleton_hypotheses,R_model.number_voxels_per_dim,
 					big_big_number, max_connectivity, this_voxel_already_treated);
+
+
+			while (local_maxes_skeleton_hypotheses.size() > 0 && valid == true){
+				loop_counter++;
+
+
+				multiple_paths_from_same_start.clear();
+				local_tip = local_maxes_skeleton_hypotheses[0];
+
+				//cout << "Local tip " << local_tip << "  already treated " << this_voxel_already_treated[local_tip] << endl;
+
+				if (this_voxel_already_treated[local_tip] == false){ // determine if this voxel has been tested already.
+
+					pre_skeleton_nodes.clear();
+
+					local_max_distance_double = BFS_search_from_tip_to_existing_skeleton(SkeletonGraphCC[cc], bfs_label_outside_to_inside_inverse_double,
+							bfs_from_tip_double, big_big_number, local_tip, pre_skeleton_bool, stop_lines, frontier, dist_type);
+
+
+					// make a copy ....this gets reset in a later step.
+					for (int_type_t k = 0; k < number_nodes; k++){
+						stop_lines_copy[k] = stop_lines[k];
+					}
+
+					pre_skel_distance_double.clear();
+
+
+					keep_components.clear();
+					IdentifyLocalMinimaFromPreSkeletonsSetInKeepUpdatedComponents(SkeletonGraphCC[cc], pre_skeleton_bool, stop_lines, pre_skeleton_nodes, bfs_from_tip_double, keep_components);
+
+
+					for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
+						pre_skel_distance_double.push_back(pair<int_type_t, double>(pre_skeleton_nodes[k], bfs_from_tip_double[pre_skeleton_nodes[k]]));
+					}
+
+					// sort by arrival ....
+
+					std::sort(pre_skel_distance_double.begin(), pre_skel_distance_double.end(), distance_comp_function_skel_distance_double);
+
+					path_counter = 0;
+					last_path_added = paths.size();
+
+					pending_paths.clear();
+					for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
+						current_path.clear();
+						linked_path.clear();
+
+						WalkPreSkeletonToTipToFindJunctionsWithDeepIntoCornersModificationConnectivity(SkeletonGraphCC[cc], bfs_from_tip_double, bfs_label_outside_to_inside_double,
+								pre_skel_distance_double[k].first, current_path);
+
+
+						FindLinks(SkeletonGraphCC[cc], bfs_label_node_to_node_double, current_path[0], linked_path);
+
+						linked_path[0] = linked_path[1];  // housekeeping, linked path is only two elements long, we only need the second one.
+						linked_path.pop_back();
+						linked_path.insert(linked_path.end(), current_path.begin(), current_path.end());
+
+						pending_paths.push_back(linked_path);
+					}
+
+					// pre Loop handling -- step 4.2 -- deal with some noisy regions
+					if (pre_skeleton_nodes.size() > 1){
+						vector< vector<int_type_t> > temp_pending_paths;
+
+						for (int_type_t k = 0; k < pre_skeleton_nodes.size(); k++){
+							walks_through_another_stop_set0 = true;
+							walks_through_another_stop_set1 = false;
+							int_type_t out_of_first_stop_set_index = pending_paths[k].size();
+
+							int_type_t limit = pending_paths[k].size();
+							if (limit > 10){ limit = 10;}
+
+
+							// first one is the skeleton.
+							for (int_type_t i = 1, in  = pending_paths[k].size(); i < in && walks_through_another_stop_set0 == true; i++){
+								if (stop_lines_copy[pending_paths[k][i]] == false){
+									walks_through_another_stop_set0 = false;
+									out_of_first_stop_set_index = i;
+								}
+							}
+
+							for (int_type_t i = out_of_first_stop_set_index, in  = pending_paths[k].size(); i < in && walks_through_another_stop_set1 == false; i++){
+								if (stop_lines_copy[pending_paths[k][i]] == true){
+									walks_through_another_stop_set1 = true;
+								}
+							}
+
+							if (walks_through_another_stop_set1 == false){
+								temp_pending_paths.push_back(pending_paths[k]);
+							}	else {
+								ClearConnectedComponent(SkeletonGraphCC[cc], pending_paths[k][out_of_first_stop_set_index - 1],  stop_lines_copy);
+							}
+						}
+
+						temp_pending_paths.swap(pending_paths);
+
+						// need to go through and zero out the extra stop set components as well.
+					}
+
+					//				cout << "prending paths size " << pending_paths.size() << endl;
+					//				if (pending_paths.size() == 1){
+					//					for (int pp = 0; pp < pending_paths[0].size(); pp++){
+					//						cout << pending_paths[0][pp] << " ";
+					//					}
+					//					cout << endl;
+					//				}
+					if (pending_paths.size() == 0){
+						//cout << "We have no paths" << endl;
+						//exit(1);
+					}	else {
+
+
+						// the size of pending paths may have changed, here we have the true loops.
+						// Step 4.2 -- loop handling
+						if (pending_paths.size() > 1){ ///loop case
+							int_type_t first_intersection = 0;
+							//int_type_t first_path_max_index_of_intersection = 0;
+
+							int_type_t first_path_id = current_path_id;
+							int_type_t last_path_id = 0;
+
+							// this changes the labels to be the maximum numbered-branch that is coicident with the current branch.
+							// the last branch has all the same label.
+							for (int_type_t k = 0; k < pending_paths.size(); k++){
+								// don't overwrite the ends ....
+								first_intersection = 0;
+								for (int_type_t j = 1, jn = pending_paths[k].size(); j < jn && first_intersection == 0; j++){
+									SkeletonGraphCC[cc][pending_paths[k][j]].path_id = current_path_id;
+								}
+
+								if (SkeletonGraphCC[cc][pending_paths[k][0]].path_id == 0){
+									SkeletonGraphCC[cc][pending_paths[k][0]].path_id = current_path_id;
+								}
+
+								path_counter++;
+								current_path_id++;
+							}
+
+							last_path_id = current_path_id - 1;
+							bool stop_descent = false;
+							int_type_t path_id_for_this_one;
+
+							for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
+								path_id_for_this_one = k + first_path_id;
+
+								stop_descent = false;
+								for (int_type_t i = pending_paths[k].size(); i > 2 && stop_descent == false; i--){
+									if (SkeletonGraphCC[cc][pending_paths[k][i-2]].path_id == path_id_for_this_one){
+										stop_descent = true;
+									}	else {
+										pending_paths[k].pop_back();
+									}
+								}
+								paths.push_back(pending_paths[k]);
+							}
+
+							path_id_for_this_one = pending_paths.size() - 1 + first_path_id;
+							for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
+								if (SkeletonGraphCC[cc][pending_paths[k].back()].path_id == path_id_for_this_one){
+									SkeletonGraphCC[cc][pending_paths[k].back()].path_id = 0;
+								}
+							}
+
+							// pop off the 'tail' for this local max
+							stop_descent = false;
+							for (int_type_t i = pending_paths.back().size() + 1; i > 1 && stop_descent == false; i--){
+								if (SkeletonGraphCC[cc][pending_paths[pending_paths.size() - 1][i-2]].path_id == 0){
+									stop_descent = true;
+								}	else {
+									SkeletonGraphCC[cc][pending_paths[pending_paths.size() - 1].back()].path_id = 0;
+									pending_paths[pending_paths.size() - 1].pop_back();
+								}
+							}
+
+							// then rewrite
+							for (int_type_t k = 0; k < pending_paths.size() - 1; k++){
+								if (SkeletonGraphCC[cc][pending_paths[k].back()].path_id == 0){
+									SkeletonGraphCC[cc][pending_paths[k].back()].path_id = path_id_for_this_one;
+								}
+							}
+
+							//cout << "Line 910 " << endl;
+							for (int_type_t k = 0; k < pending_paths.size(); k++){
+								paths.push_back(pending_paths[k]);
+							}
+						}	else {
+							// mark the tip
+							this_voxel_already_treated[local_tip] = true;
+							// non loop case
+
+							if (current_path_id > 1){
+
+
+								passed_spurious_tests = ClassifyUsingChiSquaredAssumption(SkeletonGraphCC[cc], pending_paths[0][0], stop_lines_copy, paths, R_model.number_voxels_per_dim,
+										big_big_number, max_connectivity, pending_paths[0], threshold);
+
+							}	else {
+								passed_spurious_tests = true;
+							}
+
+							if (passed_spurious_tests){
+								//	cout << "Entering 1394" << pending_paths.size() << endl;
+								// this takes care of the case with more than one segment per tip
+
+								for (int_type_t j = 1, jn = pending_paths[0].size(); j < jn; j++){
+									SkeletonGraphCC[cc][pending_paths[0][j]].path_id = current_path_id;
+								}
+								if (SkeletonGraphCC[cc][pending_paths[0][0]].path_id == 0){
+									SkeletonGraphCC[cc][pending_paths[0][0]].path_id = current_path_id;
+								}
+
+								path_counter++;
+
+								current_path_id++;
+								paths.push_back(pending_paths[0]);
+							}	else {
+
+								FillInTreatedMap(SkeletonGraphCC[cc], bfs_from_tip_double, this_voxel_already_treated, big_big_number);
+							}
+						}
+						current_path.clear();
+
+						// Step 2.1 -- update BFS1
+						if (paths.size() != last_path_added){
+							vector<int_type_t> all_paths = paths[last_path_added];
+
+							for (int_type_t new_path = last_path_added + 1; new_path < paths.size(); new_path++){
+								all_paths.insert(all_paths.end(), paths[new_path].begin(), paths[new_path].end());
+							}
+							greatest_mod_distance_double = BFS_search_from_start_set(SkeletonGraphCC[cc],
+									bfs_label_outside_to_inside_inverse_double, bfs_label_node_to_node_double,
+									big_big_number, frontier, all_paths, dist_type, false);
+						}
+					}
+
+					// cleaup relevant for very thin regions.
+					size_paths_by_loop.push_back(paths.size());
+					for (int pc = size_paths_by_loop[loop_counter - 1], pc_n = size_paths_by_loop[loop_counter]; pc < pc_n; pc++){
+						for (int_type_t j = 0, jn = paths[pc].size(); j < jn; j++){
+							this_voxel_already_treated[paths[pc][j]] = true;
+						}
+					}
+
+				}
+
+
+				// Step 2.2 -- locate potential endpoints in BFS1 map
+				// find a new local maxima for the next round .....
+				local_maxes_skeleton_hypotheses.clear();
+
+				//cout << "Loop counter " << loop_counter << endl;
+
+				// it may be that we terminate b/c we can't find any more local maxima.
+				valid = FindLocalMaximaSurfaceSingle(SkeletonGraphCC[cc], bfs_label_node_to_node_double, already_explored,
+						local_maxes_skeleton_hypotheses,R_model.number_voxels_per_dim,
+						big_big_number, max_connectivity, this_voxel_already_treated);
+			}
+			out.close();
+
+
+			////*******************  This section helps with organizing the curve skeleton output into a graph edges ********************************////
+			//// *******************    Not included in the WACV paper, basic housekeeping  ****************************************************************************/////
+
+
+
+			BreakIntoSegments(R_model, SkeletonGraphCC[cc], paths, segment_paths_by_cc[cc]);
+
+			delete [] bfs_label_outside_to_inside_double;
+			delete [] bfs_label_outside_to_inside_inverse_double;
+			delete [] bfs_label_node_to_node_double;
+			delete [] bfs_from_tip_double;
+
+			delete [] frontier;
+			delete [] already_explored;
+			delete [] this_voxel_already_treated;
+			delete [] pre_skeleton_bool;
+			delete [] stop_lines;
+			delete [] stop_lines_copy;
+
+			loop_counter_by_cc[cc] = loop_counter;
+
 		}
-		out.close();
-
-
-		////*******************  This section helps with organizing the curve skeleton output into a graph edges ********************************////
-		//// *******************    Not included in the WACV paper, basic housekeeping  ****************************************************************************/////
-
-
-
-		BreakIntoSegments(R_model, SkeletonGraphCC[cc], paths, segment_paths_by_cc[cc]);
-
-		delete [] bfs_label_outside_to_inside_double;
-		delete [] bfs_label_outside_to_inside_inverse_double;
-		delete [] bfs_label_node_to_node_double;
-		delete [] bfs_from_tip_double;
-
-		delete [] frontier;
-		delete [] already_explored;
-		delete [] this_voxel_already_treated;
-		delete [] pre_skeleton_bool;
-		delete [] stop_lines;
-
-		loop_counter_by_cc[cc] = loop_counter;
-
 	}
 
 	// stop timer, start writing.
@@ -696,7 +732,7 @@ void TabbMedeiros(DISTANCE dist_type, string supplied_write_directory, double th
 			out << number_elements << endl;
 
 			for (int_type_t j = 0; j < number_elements; j++){
-				out << segment_paths_by_cc[cc][i][j] << " ";
+				out << SkeletonGraphCC[cc][segment_paths_by_cc[cc][i][j]].grid_id << " ";
 			}
 
 			out << endl;

@@ -39,9 +39,14 @@ void OverwriteFirstArrayWithSecond(T* arr0, T* arr1, int_type_t N){
 
 }
 
-void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
+//void FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
+//		vector<int_type_t>& local_maxima,
+//		vector<int_type_t>& grid_structure, int_type_t big_number, int max_connectivity, bool* already_treated);
+
+bool FindLocalMaximaSurfaceSingle(vector<SkelGraph>& SG, double* bfs_labels, bool* already_explored,
 		vector<int_type_t>& local_maxima,
 		vector<int_type_t>& grid_structure, int_type_t big_number, int max_connectivity, bool* already_treated);
+
 
 
 int_type_t  BFS_search_from_tip_to_existing_skeleton(vector<SkelGraph>& SG, double* bfs_labels_oTi_inverse,
