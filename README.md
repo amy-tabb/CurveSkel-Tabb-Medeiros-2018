@@ -73,6 +73,8 @@ Basic instructions for compilation and linking:
 The flags needed using the gnu compiler, openmp, and the C++11 standard are: `-fopenmp  -std=gnu++11`
 
 though depending on the compiler used, you may need different [flags](https://www.dartmouth.edu/~rc/classes/intro_openmp/compile_run.html)
+
+Also, for some test sets optimization seemed to make a positive difference ( -03 ).  This is something I am looking into.
 	
 4. 	libraries needed for linking are:
 ```
@@ -93,7 +95,7 @@ though depending on the compiler used, you may need different [flags](https://ww
 7. Easy way to build without Eclipse CDT:
 
 ```
-g++ src/*.cpp -o curve_skel -fopenmp -std=gnu++11 -Wall -I/usr/local/include -lgomp -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
+g++ src/*.cpp -o curve_skel -O3 -g3 -fopenmp -std=gnu++11 -MMD -MP -MF -Wall -I/usr/local/include -lgomp -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 ```
 
 The executable `curve_skel` is created.  If you used method 6., the location will be in `Debug`.
