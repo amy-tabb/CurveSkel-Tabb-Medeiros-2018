@@ -1,5 +1,6 @@
 #include "ConversionFunctions.hpp"
 #include "DirectoryFunctions.hpp"
+#include "Includes.hpp"
 
 
 bool sort_ascending(pair<int, int_type_t> a, pair<int, int_type_t> b){
@@ -31,7 +32,11 @@ void ReadIndividualImages(string write_directory){
 
 	for (int_type_t i = 0; i < filenames.size(); i++){
 		filename = write_directory + "/rawimage/" + filenames[i];
-		image_raw = cv::imread(filename.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+		//OpenCV 3.0 version
+		//image_raw = cv::imread(filename.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+
+		// OpenCV 4.0 version
+		image_raw = cv::imread(filename.c_str(), cv::IMREAD_GRAYSCALE);
 
 		if (i == 0){
 			// x = number of slices, y = rows, z = cols

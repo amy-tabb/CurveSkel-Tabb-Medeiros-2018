@@ -8,6 +8,7 @@ Changelog:
 - Option to apply algorithm to all of the connected components, or only the largest one.  The previous version only applied the algorithm to the largest connected component.
 - Output the individual segments of the curve skeleton visually in a .ply file, as well as the voxel coordinates in a .txt file.
 - Another input and output option of xyz coordinates. 
+- Dec. 13. Updates wrt OpenCV 4.0, general cleanup.
 
 # Underlying ideas -- the paper
 
@@ -65,7 +66,8 @@ Basic instructions for compilation and linking:
 1. This code has been written and tested on Ubuntu 14.04 and Ubuntu 16.04, using Eclipse CDT as the IDE, and is written in C/C++.  
 
 
-2. This code is dependent on the >= OpenCV-3.* libraries and OpenMP library (libgomp).  These libraries should be in the include path, or specified in your IDE.
+2. This code is dependent on the >= OpenCV-3.*, OpenCV 4.0 libraries and OpenMP library (libgomp).  These libraries should be in the include path, or specified in your IDE.
+- OpenCV notes: There is only line where the OpenCV version between 3.x and 4.0 matters, in ConversionFunctions.cpp, and concerns an enum.  If you are using a 3.x version, build, see where it fails, and then fix the line.  I left the OpenCV 3.x line commented, but in the code, and then comment out the OpenCV 4.0 version.
 
 
 3. Compiler flags: we use OpenMP for parallelization and the C++11 standard.  Note that Eclipse's indexer marks some items from C++11 as errors (but still compiles).  
@@ -80,7 +82,7 @@ Also, for some test sets optimization seemed to make a positive difference ( -03
 ```
 	gomp   [OpenMP]
 	opencv_core [OpenCV]
-	opencv_legacy [deprecated, some versions of OpenCV and not needed] 
+	opencv_legacy [deprecated, in some versions of OpenCV and not needed] 
 	opencv_highgui
 	opencv_imgproc
 	opencv_imgcodecs

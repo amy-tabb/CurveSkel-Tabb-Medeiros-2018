@@ -2,10 +2,6 @@
 #define RECONSTRUCTIONSTRUCTURE_HPP_
 #include "Includes.hpp"
 
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
-
-
 #include <math.h>
 #include <cstdlib>
 #include <stdio.h>

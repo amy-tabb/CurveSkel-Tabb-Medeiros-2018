@@ -21,10 +21,24 @@
 #include <vector>
 #include <set>
 #include <cmath>
+#include <math.h>
+#include <cstdlib>
+#include <stdio.h>
+
+#include <ctime>
+#include <time.h>
+
+#include <fstream>
+#include <sstream>
+
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/utility.hpp>
+#include <opencv2/imgproc.hpp>
 
 using std::vector;
 using std::ifstream;
